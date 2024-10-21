@@ -1,0 +1,21 @@
+{
+    "UserId": 1,
+    "Username": "rabe3",
+    "Token": "abc123",
+    "Streaks": [
+        {
+            "Habit": "Exercise",
+            "StartDays": [ "2023-09-01", "2023-10-15" ],
+            "EndDays": [ "2023-09-30", "2023-10-19" ],
+            "StreaksCount": 2,
+            "LongestStreak": 30
+        },
+        {
+            "Habit": "Read",
+            "StartDays": [ "2023-09-10" ],
+            "EndDays": [ "2024-10-21" ],
+            "StreaksCount": 1,
+            "LongestStreak": 40
+        }
+    ]
+}
