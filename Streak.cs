@@ -1,6 +1,6 @@
 ﻿namespace StreakerConsole
 {
-    public class Streak
+    internal class Streak
     {
         public string Habit { get; set; }
         public List<string> StartDays { get; set; }

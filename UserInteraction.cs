@@ -3,7 +3,6 @@
     internal class UserInteraction
     {
         private Session session;
-
         public UserInteraction(Session session)
         {
             this.session = session;
@@ -39,6 +38,11 @@
         }
         public void Add()
         {
+            if (IO.readOnly)
+            {
+                Console.WriteLine("DB is not connected, showing local data only, please try restarting your application.");
+                return;
+            }
             if (session.Streaks.Count == 0)
             {
                 Console.WriteLine("You have no streaks yet, create one by entering 'new'");
@@ -46,13 +50,14 @@
             }
             Console.WriteLine("Enter the name of the streak you continued today:");
             string habit = Console.ReadLine() ?? string.Empty;
-            habit = habit.ToLower();
+            habit = habit.Trim().ToLower();
             habit = char.ToUpper(habit[0]) + habit.Substring(1);
             if (session.StreakIndices.ContainsKey(habit))
             {
                 var streak = session.Streaks[session.StreakIndices[habit]];
                 Console.WriteLine(streak.Habit);
                 streak.AddStreakDay();
+                IO.changes = true;
             }
             else
             {
@@ -74,13 +79,19 @@
         }
         public void New()
         {
+            if (IO.readOnly)
+            {
+                Console.WriteLine("DB is not connected, showing local data only, please try restarting your application.");
+                return;
+            }
             Console.WriteLine("Enter the name of the new streak:");
             string habit = Console.ReadLine() ?? string.Empty;
             while (habit == string.Empty) habit = Console.ReadLine() ?? string.Empty;
-            habit = habit.ToLower();
+            habit = habit.Trim().ToLower();
             habit = char.ToUpper(habit[0]) + habit.Substring(1);
             session.AddHabit(0, habit, "", "");
             Console.WriteLine("New streak '" + habit + "' created, good luck!");
+            IO.changes = true;
         }
 
     }

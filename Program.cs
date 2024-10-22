@@ -1,16 +1,18 @@
 ﻿using System.Text.Json;
-
+using MySql.Data.MySqlClient;
+using MySqlX.XDevAPI;
+using System;
 namespace StreakerConsole
 {
 
 
     internal class Program
     {
-        private static string datapath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "StreakerConsole", "Session.json");
-
         static void Main(string[] args)
         {
-            Session session = LoadSession();
+            AppDomain.CurrentDomain.ProcessExit += new EventHandler(OnProcessExit);
+            Session session = IO.LoadSession();
+            IO.session = session;
             UserInteraction ui = new UserInteraction(session);
             ui.GreetUser();
             while (true)
@@ -18,8 +20,7 @@ namespace StreakerConsole
                 Console.WriteLine(new string('-', 40));
                 string xd = string.Empty;
                 while (xd == string.Empty) xd = Console.ReadLine() ?? string.Empty;
-                xd = xd.ToLower();
-
+                xd = xd.Trim().ToLower();
                 switch (xd)
                 {
                     case "exit":
@@ -46,50 +47,17 @@ namespace StreakerConsole
                         Console.WriteLine("Invalid Input");
                         break;
                 }
-
-                if (xd == "exit")
-                {
-                    break;
-                }
+                if (xd == "exit") break;
             }
-            SaveSession(session);
-        }
 
-        private static void CreateDefaultSessionFile()
-        {
-            //to be synced via a database
-            Console.WriteLine("Creating default session file...");
-            Session defaultSession = new Session
+            static void OnProcessExit(object sender, EventArgs e)
             {
-                UserId = 0,
-                Username = "NewUser",
-                Token = string.Empty,
-                Streaks = new List<Streak>(),
-                StreakIndices = new Dictionary<string, int>(),
-                Index = 0
-            };
+                Console.WriteLine("Exiting application (window close detected).");
+                IO.SaveSession(); 
+            }
+        }
 
-            // Serialize default session to JSON
-            string defaultJsonStr = JsonSerializer.Serialize(defaultSession, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(datapath, defaultJsonStr);
-        }
-        private static void SaveSession(Session session)
-        {
-            string jsonStr = JsonSerializer.Serialize(session, new JsonSerializerOptions { WriteIndented = true });
-            Console.WriteLine(jsonStr);
-            File.WriteAllText(datapath, jsonStr);
-        }
-        private static Session LoadSession()
-        {
-            //check if session file and directory exist, if not create them
-            var dir = Path.GetDirectoryName(datapath);
-            if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
-            if (!File.Exists(datapath)) CreateDefaultSessionFile();
-
-            //init session
-            string jsonStr = File.ReadAllText(datapath);
-            return new Session(jsonStr);
-        }
+        
 
     }
 }

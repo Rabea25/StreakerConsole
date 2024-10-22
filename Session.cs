@@ -10,7 +10,7 @@ namespace StreakerConsole
         public string Username { get; set; } = string.Empty;
         public string Token { get; set; } = string.Empty;
         public List<Streak> Streaks { get; set; }
-        public int Index { get; set; }
+        public int IDX { get; set; }
         public Dictionary<string, int> StreakIndices { get; set; } = new Dictionary<string, int>();
         public Session() { }
         public Session(string jsonStr)
@@ -21,7 +21,7 @@ namespace StreakerConsole
             Token = sesh.Token;
             Streaks = sesh.Streaks;
             StreakIndices = sesh.StreakIndices;
-            Index = sesh.Index;
+            IDX = sesh.IDX;
             foreach (var s in Streaks) s.UpdateRunningStreak();
 
         }
@@ -33,7 +33,7 @@ namespace StreakerConsole
                 d1 = d2 = DateTime.Now.ToString("yyyy-MM-dd");
             }
             Streaks.Add(new Streak { Habit = habit, StartDays = [d1], EndDays = [d2], StreaksCount = 1, LongestStreak = 1, RunningStreak = true });
-            StreakIndices.Add(habit, Index++);
+            StreakIndices.Add(habit, IDX++);
         }
     }
 }
