@@ -1,49 +1,95 @@
-﻿using System;
-using System.Text.Json;
-using System.IO;
-using System.Collections.Generic;
-using System.Xml;
-using static System.Collections.Specialized.BitVector32;
+﻿using System.Text.Json;
 
 namespace StreakerConsole
 {
-        
+
 
     internal class Program
     {
-        private static string jsonStr = File.ReadAllText("C:\\projects\\StreakerConsole\\Session.json");
+        private static string datapath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "StreakerConsole", "Session.json");
+
         static void Main(string[] args)
         {
-
-            Session session = new Session(jsonStr);
-            Console.WriteLine("Welcome back, " + session.Username);
-            Console.WriteLine("Your current streaks are:");
-            foreach (var streak in session.Streaks)
-            {
-                if(streak.RunningStreak) Console.WriteLine(streak.Habit + ": " + streak.LongestStreak + " days");
-            }
-            Console.WriteLine("for a list of commands, enter 'help'");
-            Console.WriteLine("To exit, enter 'exit'");
+            Session session = LoadSession();
+            UserInteraction ui = new UserInteraction(session);
+            ui.GreetUser();
             while (true)
             {
+                Console.WriteLine(new string('-', 40));
                 string xd = string.Empty;
-                while(xd == string.Empty)
+                while (xd == string.Empty) xd = Console.ReadLine() ?? string.Empty;
+                xd = xd.ToLower();
+
+                switch (xd)
                 {
-                    xd = Console.ReadLine();
+                    case "exit":
+                        break;
+                    case "help":
+                        ui.Help();
+                        break;
+                    case "checkin":
+                        ui.Add();
+                        break;
+                    case "list":
+                        ui.List();
+                        break;
+                    case "longest":
+                        // TODO: Implement longest streak logic
+                        break;
+                    case "running":
+                        // TODO: Implement running streak logic
+                        break;
+                    case "new":
+                        ui.New();
+                        break;
+                    default:
+                        Console.WriteLine("Invalid Input");
+                        break;
                 }
-                if (xd == "exit") break;
-                if (xd == "help")
+
+                if (xd == "exit")
                 {
-                    Console.WriteLine("Commands:");
-                    Console.WriteLine("exit: exits the program");
-                    Console.WriteLine("help: displays this message");
-                    Console.WriteLine("add: adds a day to a streak");
-                    Console.WriteLine("list: lists all streaks");
-                    Console.WriteLine("longest: lists the longest streaks");
-                    Console.WriteLine("running: lists the running streaks");
-                    Console.WriteLine("new: creates a new streak");
+                    break;
                 }
             }
+            SaveSession(session);
         }
+
+        private static void CreateDefaultSessionFile()
+        {
+            //to be synced via a database
+            Console.WriteLine("Creating default session file...");
+            Session defaultSession = new Session
+            {
+                UserId = 0,
+                Username = "NewUser",
+                Token = string.Empty,
+                Streaks = new List<Streak>(),
+                StreakIndices = new Dictionary<string, int>(),
+                Index = 0
+            };
+
+            // Serialize default session to JSON
+            string defaultJsonStr = JsonSerializer.Serialize(defaultSession, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(datapath, defaultJsonStr);
+        }
+        private static void SaveSession(Session session)
+        {
+            string jsonStr = JsonSerializer.Serialize(session, new JsonSerializerOptions { WriteIndented = true });
+            Console.WriteLine(jsonStr);
+            File.WriteAllText(datapath, jsonStr);
+        }
+        private static Session LoadSession()
+        {
+            //check if session file and directory exist, if not create them
+            var dir = Path.GetDirectoryName(datapath);
+            if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+            if (!File.Exists(datapath)) CreateDefaultSessionFile();
+
+            //init session
+            string jsonStr = File.ReadAllText(datapath);
+            return new Session(jsonStr);
+        }
+
     }
 }

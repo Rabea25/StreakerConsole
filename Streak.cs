@@ -7,7 +7,7 @@
         public List<string> EndDays { get; set; }
         public int StreaksCount { get; set; }
         public int LongestStreak { get; set; }
-        public bool RunningStreak { get; private set; }
+        public bool RunningStreak { get; set; }
 
 
         public void UpdateRunningStreak()
@@ -22,10 +22,25 @@
         public void AddStreakDay()
         {
             string today = DateTime.Now.ToString("yyyy-MM-dd");
-            if (RunningStreak && EndDays[^1] != today)
+            if (RunningStreak)
             {
-                EndDays[^1] = today;
-                LongestStreak = Math.Max(LongestStreak, CalculateStreakLength(StartDays[^1], EndDays[^1]));
+                if (EndDays[^1] != today)
+                {
+                    EndDays[^1] = today;
+                    LongestStreak = Math.Max(LongestStreak, CalculateStreakLength(StartDays[^1], EndDays[^1]));
+                    Console.WriteLine("Day added to " + Habit + ", current streak length is " + CurrentStreakLength());
+                }
+                else
+                {
+                    Console.WriteLine("You already checked in today!");
+                }
+            }
+            else
+            {
+                Console.WriteLine("Your last check in was at " + EndDays[^1] + ", starting a new streak today, good luck!");
+                StartDays.Add(today);
+                EndDays.Add(today);
+                StreaksCount++;
             }
         }
         private int CalculateStreakLength(string startDate, string endDate)
@@ -34,6 +49,10 @@
             DateTime end = DateTime.Parse(endDate);
 
             return (end - start).Days + 1; // Adding 1 to include both the start and end days
+        }
+        public int CurrentStreakLength()
+        {
+            return CalculateStreakLength(StartDays[^1], EndDays[^1]);
         }
     }
 }
