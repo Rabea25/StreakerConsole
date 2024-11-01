@@ -2,6 +2,8 @@
 using MySql.Data.MySqlClient;
 using MySqlX.XDevAPI;
 using System;
+using System.Net.Http;
+using System.Threading.Tasks;
 namespace StreakerConsole
 {
 
@@ -10,11 +12,17 @@ namespace StreakerConsole
     {
         static void Main(string[] args)
         {
-            AppDomain.CurrentDomain.ProcessExit += new EventHandler(OnProcessExit);
-            Session session = IO.LoadSession();
+            // Call the asynchronous method and wait for it to complete
+            Task.Run(async () => await MainAsync(args)).GetAwaiter().GetResult();
+        }
+
+        static async Task MainAsync(string[] args)
+        {
+            Session session = await IO.LoadSession();
             IO.session = session;
             UserInteraction ui = new UserInteraction(session);
             ui.GreetUser();
+            AppDomain.CurrentDomain.ProcessExit += new EventHandler(OnProcessExit);
             while (true)
             {
                 Console.WriteLine(new string('-', 40));
@@ -53,11 +61,9 @@ namespace StreakerConsole
             static void OnProcessExit(object sender, EventArgs e)
             {
                 Console.WriteLine("Exiting application (window close detected).");
-                IO.SaveSession(); 
+               IO.SaveSession(); 
             }
         }
-
-        
 
     }
 }

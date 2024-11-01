@@ -1,4 +1,6 @@
 ﻿using MySql.Data.MySqlClient;
+using System.Linq.Expressions;
+using System.Text;
 using System.Text.Json;
 namespace StreakerConsole
 {
@@ -10,7 +12,7 @@ namespace StreakerConsole
                                                  $"Database={Environment.GetEnvironmentVariable("DB_NAME")};" +
                                                  $"User ID={Environment.GetEnvironmentVariable("DB_USER")};" +
                                                  $"Password={Environment.GetEnvironmentVariable("DB_PASS")};";
-        private static string token = Environment.GetEnvironmentVariable("TOKEN"); //implement later loading token from env or from credentials or whatever
+        internal static string token = Environment.GetEnvironmentVariable("TOKEN"); //implement later loading token from env or from credentials or whatever
         internal static bool changes = false;
         internal static bool readOnly = false;
         internal static Session session;
@@ -75,38 +77,27 @@ namespace StreakerConsole
                 }
             }
         }
-        internal static Session LoadSession()
+        internal static async Task<Session> LoadSession()
         {
             try
             {
-                using (var connection = new MySqlConnection(connectionString))
+                var xd = await GetData(token);
+                if (xd != null) {
+                    xd = xd.Replace("\\\"", "\"");
+                    xd = xd.Substring(1, xd.Length - 3);
+                    Console.WriteLine(xd);
+                    return JsonSerializer.Deserialize<Session>(xd) ?? throw new InvalidOperationException("Deserialization returned null");
+                }
+                else
                 {
-                    connection.Open();
-                    string query = "SELECT JSON_OBJECT('UserId', user_id, 'Username', username, 'Token', token, 'Streaks', streaks, 'IDX', IDX, 'StreakIndices', streak_indices) AS session_json FROM sessions WHERE token = @token";
-                    using (var command = new MySqlCommand(query, connection))
-                    {
-                        command.Parameters.AddWithValue("@token", token);
-                        // TODO: handle when token is new to db and no session is found
-                        using (var reader = command.ExecuteReader())
-                        {
-                            if (reader.Read())
-                            {
-                                return JsonSerializer.Deserialize<Session>(reader.GetString("session_json")) ?? new Session();
-                            }
-                            else
-                            {
-                                Console.WriteLine("Connection to DB failed, loading cached local session with read-only permissions.");
-                                readOnly = true;
-                                //check if session file and directory exist, if not create them
-                                return LoadOfflineSession();
-                            }
-                        }
-                    }
+                    Console.WriteLine("Failed to get data, loading local session.");
+                    readOnly = true;
+                    return LoadOfflineSession();
                 }
             }
             catch (Exception e)
             {
-                Console.WriteLine("Connection to DB failed, loading cached local session with read-only permissions.");
+                Console.WriteLine(e);
                 readOnly = true;
                 return LoadOfflineSession();
             }
@@ -120,6 +111,17 @@ namespace StreakerConsole
             //init session
             string jsonStr = File.ReadAllText(datapath);
             return new Session(jsonStr);
+        }
+
+        private static readonly HttpClient client = new HttpClient();
+        public static async Task<string> GetData(string token)
+        {
+            var url = Environment.GetEnvironmentVariable("WEBAPP"); //webapp url, example http://192.168.1.1/verify
+            var json = JsonSerializer.Serialize(new { session_token = token });
+            HttpResponseMessage response = await client.PostAsync(url, new StringContent(json, Encoding.UTF8, "application/json"));
+            response.EnsureSuccessStatusCode();
+            string responseBody = await response.Content.ReadAsStringAsync();
+            return responseBody;
         }
     }
 }

@@ -7,7 +7,8 @@
         "DB_NAME": "streakerconsole_db",
         "DB_HOST": "144.24.195.74",
         "DB_USER": "streaker_user",
-        "DB_PASS": "fuckaroo69"
+        "DB_PASS": "fuckaroo69",
+        "WEBAPP": "http://144.24.195.74:7777/verify"
       }
     }
   }
